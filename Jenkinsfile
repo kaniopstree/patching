@@ -3,22 +3,23 @@ pipeline {
     agent any
 
     stages {
-
         stage('Run Package Patching') {
+    steps {
 
-            steps {
+        sshagent(credentials: ['patching-server']) {
 
-                sh """
-                ansible-playbook \
-                -i inventory/hosts.ini \
-                playbooks/update-package.yml \
-                -e HOSTS=${params.HOSTS} \
-                -e PACKAGE=${params.PACKAGE} \
-                -e VERSION='${params.VERSION}'
-                """
-            }
+            sh """
+            ansible-playbook \
+            -i inventory/hosts.ini \
+            playbooks/update-package.yml \
+            -e HOSTS=${params.HOSTS} \
+            -e PACKAGE=${params.PACKAGE} \
+            -e VERSION='${params.VERSION}'
+            """
+
         }
     }
+}
 
     post {
 
