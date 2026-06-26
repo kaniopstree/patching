@@ -47,11 +47,20 @@
 
     - name: Install Requested Version
       shell: |
-        apt-get install \
-          --allow-downgrades \
-          --allow-change-held-packages \
-          -y \
-          {{ package }}={{ version }}
+        if [ "{{ package }}" = "curl" ]; then
+          apt-get install \
+            --allow-downgrades \
+            --allow-change-held-packages \
+            -y \
+            curl={{ version }} \
+            libcurl4t64={{ version }}
+        else
+          apt-get install \
+            --allow-downgrades \
+            --allow-change-held-packages \
+            -y \
+            {{ package }}={{ version }}
+        fi
       when: version != ""
 
     - name: Verify Installed Version
