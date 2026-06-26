@@ -1,0 +1,63 @@
+---
+- name: Package Patching
+  hosts: "{{ HOSTS }}"
+  become: yes
+
+  vars:
+    package: "{{ PACKAGE }}"
+    version: "{{ VERSION | default('') }}"
+
+  tasks:
+
+    - name: Verify Connectivity
+      ping:
+
+    - name: Show Hostname
+      command: hostname
+      register: hostname_output
+
+    - name: Display Hostname
+      debug:
+        var: hostname_output.stdout
+
+    - name: Check Installed Package
+      shell: |
+        dpkg -l | grep {{ package }}
+      register: installed_package
+      ignore_errors: yes
+
+    - name: Display Installed Package
+      debug:
+        var: installed_package.stdout_lines
+
+    - name: Show Repository Versions
+      command: apt-cache madison {{ package }}
+      register: repo_versions
+
+    - name: Display Repository Versions
+      debug:
+        var: repo_versions.stdout_lines
+
+    - name: Install Latest Version
+      apt:
+        name: "{{ package }}"
+        state: latest
+        update_cache: yes
+      when: version == ""
+
+    - name: Install Requested Version
+      shell: |
+        apt-get install \
+          --allow-downgrades \
+          --allow-change-held-packages \
+          -y \
+          {{ package }}={{ version }}
+      when: version != ""
+
+    - name: Verify Installed Version
+      command: apt-cache policy {{ package }}
+      register: verify_package
+
+    - name: Display Installed Version
+      debug:
+        var: verify_package.stdout_lines

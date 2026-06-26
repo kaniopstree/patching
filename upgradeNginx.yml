@@ -1,0 +1,29 @@
+---
+- name: Nginx Package Upgrade
+  hosts: webservers
+  become: true
+
+  vars:
+    package: nginx-core
+    version: "1.18.0-6ubuntu14.16"
+
+  tasks:
+    - name: Gather current nginx version
+      command: nginx -v
+      register: nginx_before
+      changed_when: false
+
+    - name: Upgrade nginx to target version
+      apt:
+        name: "{{ package }}={{ version }}"
+        state: present
+        update_cache: true
+
+    - name: Gather upgraded nginx version
+      command: nginx -v
+      register: nginx_after
+      changed_when: false
+
+    - name: Confirm installed version
+      debug:
+        msg: "Nginx upgraded successfully | version: {{ nginx_after.stderr }}"
