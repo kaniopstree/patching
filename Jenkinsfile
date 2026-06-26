@@ -3,7 +3,9 @@ pipeline {
     agent any
 
     stages {
-        stage('Run Package Patching') {
+
+	stage('Run Package Patching') {
+
     steps {
 
         sshagent(credentials: ['patching-server']) {
@@ -18,9 +20,10 @@ pipeline {
             """
 
         }
-    }
-}
 
+    }
+
+}
     post {
 
         success {
