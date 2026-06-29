@@ -2,6 +2,10 @@ pipeline {
 
     agent any
 
+    options {
+        timestamps()
+    }
+
     stages {
 
         stage('Run Package Patching') {
@@ -30,15 +34,15 @@ pipeline {
     post {
 
         success {
-
             echo "Package patching completed successfully."
-
         }
 
         failure {
-
             echo "Package patching failed."
+        }
 
+        always {
+            cleanWs()
         }
 
     }
