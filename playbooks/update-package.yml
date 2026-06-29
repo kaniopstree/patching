@@ -1,72 +1,39 @@
 ---
-- name: Package Patching
+- name: Generic Package Update
   hosts: "{{ HOSTS }}"
   become: yes
-
-  vars:
-    package: "{{ PACKAGE }}"
-    version: "{{ VERSION | default('') }}"
+  gather_facts: yes
 
   tasks:
 
-    - name: Verify Connectivity
-      ping:
-
-    - name: Show Hostname
-      command: hostname
-      register: hostname_output
-
-    - name: Display Hostname
-      debug:
-        var: hostname_output.stdout
-
-    - name: Check Installed Package
-      shell: |
-        dpkg -l | grep {{ package }}
-      register: installed_package
-      ignore_errors: yes
-
-    - name: Display Installed Package
-      debug:
-        var: installed_package.stdout_lines
-
-    - name: Show Repository Versions
-      command: apt-cache madison {{ package }}
-      register: repo_versions
-
-    - name: Display Repository Versions
-      debug:
-        var: repo_versions.stdout_lines
-
-    - name: Install Latest Version
-      apt:
-        name: "{{ package }}"
+    - name: Update package to latest
+      package:
+        name: "{{ PACKAGE }}"
         state: latest
-        update_cache: yes
-      when: version == ""
+      when: VERSION == "" or VERSION == "latest"
 
-    - name: Install Requested Version
-      shell: |
-        if [ "{{ package }}" = "curl" ]; then
-          apt-get install \
-            --allow-downgrades \
-            --allow-change-held-packages \
-            -y \
-            curl={{ version }} \
-            libcurl4t64={{ version }}
-        else
-          apt-get install \
-            --allow-downgrades \
-            --allow-change-held-packages \
-            -y \
-            {{ package }}={{ version }}
-        fi
-      when: version != ""
+    - name: Install specific version (Debian)
+      apt:
+        name: "{{ PACKAGE }}={{ VERSION }}"
+        state: present
+        allow_downgrade: yes
+        update_cache: yes
+      when:
+        - ansible_os_family == "Debian"
+        - VERSION != ""
+        - VERSION != "latest"
+
+    - name: Install specific version (RedHat)
+      package:
+        name: "{{ PACKAGE }}-{{ VERSION }}"
+        state: present
+      when:
+        - ansible_os_family == "RedHat"
+        - VERSION != ""
+        - VERSION != "latest"
 
     - name: Verify Installed Version
-      command: apt-cache policy {{ package }}
-      register: verify_package
+      package_facts:
 
-    - name: Display Installed Version
-      debug:
-        var: verify_package.stdout_lines
+    - debug:
+        var: ansible_facts.packages[PACKAGE]
