@@ -6,11 +6,22 @@
 
   tasks:
 
-    - name: Update package to latest
+    - name: Update package to latest (Debian)
+      apt:
+        name: "{{ PACKAGE }}"
+        state: latest
+        update_cache: yes
+      when:
+        - ansible_os_family == "Debian"
+        - VERSION == "" or VERSION == "latest"
+
+    - name: Update package to latest (RedHat)
       package:
         name: "{{ PACKAGE }}"
         state: latest
-      when: VERSION == "" or VERSION == "latest"
+      when:
+        - ansible_os_family == "RedHat"
+        - VERSION == "" or VERSION == "latest"
 
     - name: Install specific version (Debian)
       apt:
@@ -24,16 +35,18 @@
         - VERSION != "latest"
 
     - name: Install specific version (RedHat)
-      package:
+      dnf:
         name: "{{ PACKAGE }}-{{ VERSION }}"
         state: present
+        allow_downgrade: yes
       when:
         - ansible_os_family == "RedHat"
         - VERSION != ""
         - VERSION != "latest"
 
-    - name: Verify Installed Version
+    - name: Gather package facts
       package_facts:
 
-    - debug:
+    - name: Show installed package version
+      debug:
         var: ansible_facts.packages[PACKAGE]
